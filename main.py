@@ -5,19 +5,19 @@ import numpy as np
 from os import listdir
 from os.path import isdir
 
-def image_smoothen(img):
+def suavizarImagem(img):
     ret1, th1 = cv2.threshold(img, 88, 255, cv2.THRESH_BINARY)
     ret2, th2 = cv2.threshold(th1, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     blur = cv2.GaussianBlur(th2, (5, 5), 0)
     ret3, th3 = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     return th3
 
-def remove_noise_and_smooth(img):
+def tratarImagemPlaca(img):
     filtered = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 9, 41)
     kernel = np.ones((1, 1), np.uint8)
     opening = cv2.morphologyEx(filtered, cv2.MORPH_OPEN, kernel)
     closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernel)
-    img = image_smoothen(img)
+    img = suavizarImagem(img)
     or_image = cv2.bitwise_or(img, closing)
     return or_image
 
@@ -62,13 +62,12 @@ def identificarPlaca(possiveisPlacas):
     placaIdentificada = ''
 
     for placa in possiveisPlacas:
-        placaTratada = remove_noise_and_smooth(placa)
+        placaTratada = tratarImagemPlaca(placa)
         valorSaida = pytesseract.image_to_string(Image.fromarray(placaTratada))
         valorSaida = removerCaracteresIndesejados(valorSaida)
 
-        cv2.imshow('img', placa)
-
         if (len(valorSaida) > 0):
+            cv2.imshow('img', placa)
             placaIdentificada = valorSaida
 
     if (placaIdentificada != ''):
